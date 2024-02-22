@@ -9,9 +9,10 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate  {
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var indicatorView: UIActivityIndicatorView!
     
     var cryptoList = [Crypto]()
     
@@ -22,11 +23,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        view.backgroundColor = .black
+        tableView.rx.setDelegate(self).disposed(by: disposeBag)
         setupBindings()
         cryptoVM.requestData()
     }
     
     private func setupBindings() {
+        
+        cryptoVM
+            .loading
+            .bind(to: self.indicatorView.rx.isAnimating)
+            .disposed(by: disposeBag)
         
         cryptoVM
             .error
@@ -35,7 +43,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 print(errorString)
             }
             .disposed(by: disposeBag)
-        
+        /*
         cryptoVM
             .cryptos
             .observe(on: MainScheduler.asyncInstance)
@@ -44,8 +52,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 self.tableView.reloadData()
             }
             .disposed(by: disposeBag)
+         */
+        
+        cryptoVM
+            .cryptos
+            .observe(on: MainScheduler.asyncInstance)
+            .bind(to: tableView.rx.items(cellIdentifier: "CryptoCell", cellType: CryptoTableViewCell.self)) {row, item, cell in
+                cell.item = item
+            }
+            .disposed(by: disposeBag)
     }
-
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 80
+    }
+    
+    /*
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return cryptoList.count
     }
@@ -58,6 +80,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         cell.contentConfiguration = content
         return cell
     }
-
+     */
 }
 
